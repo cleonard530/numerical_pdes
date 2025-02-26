@@ -1,23 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
+from numpy.typing import NDArray
+from typing import Callable, List
 
 
 class BasePDESolver1D(ABC):
-    def __init__(self, ax, bx, nx, bc='periodic'):
-        self.ax = ax
-        self.bx = bx
-        self.n_cells = nx
-        self.dx = (self.bx-self.ax) / self.n_cells
-        self.bc = bc
-        self.x = np.linspace(self.ax + (self.dx / 2), self.bx - (self.dx / 2), self.n_cells)
-        self.order = None
+    def __init__(self, ax: float, bx: float, nx: int, bc: str = 'periodic'):
+        self.ax: float = ax
+        self.bx: float = bx
+        self.n_cells: int = nx
+        self.dx: float = (self.bx-self.ax) / self.n_cells
+        self.bc: str = bc
+        self.x: NDArray = np.linspace(self.ax + (self.dx / 2), self.bx - (self.dx / 2), self.n_cells)
+        self.order: int | None = None
 
     @abstractmethod
-    def get_solution(self, u, tspan, method='cu2'):
+    def get_solution(self, u: NDArray, tspan: NDArray, method: str ='cu2'):
         pass
 
-    def set_ghost_cells(self, u):
+    def set_ghost_cells(self, u: NDArray):
         assert self.bc in ('periodic', 'wall'), f"{self.bc} is an invalid boundary condition"
         if self.bc == 'periodic':
             self.periodic_ghost_cell(u)
@@ -25,17 +27,20 @@ class BasePDESolver1D(ABC):
         if self.bc == 'wall':
             self.wall_ghost_cell(u)
 
-    def periodic_ghost_cell(self, u):
+    def periodic_ghost_cell(self, u: NDArray):
         for i in range(self.order):
             u[i, :] = u[i+self.n_cells, :]
             u[-1-i, :] = u[-1-i-self.n_cells, :]
 
-    def wall_ghost_cell(self, u):
+    def wall_ghost_cell(self, u: NDArray):
         for i in range(self.order):
             u[i, :] = u[2*self.order-1-i, :]
             u[-1, :] = u[-(2*self.order)+i, :]
 
-    def trig_initial_condition(self, a=None, b=None, k=3):
+    def trig_initial_condition(self,
+                               a: NDArray | None = None,
+                               b: NDArray | None = None,
+                               k: int = 3):
        if a is None:
            a = np.random.uniform(-1, 1, k)
        if b is None:
@@ -48,8 +53,23 @@ class BasePDESolver1D(ABC):
                              b[i - 1] * np.sin(2*np.pi*i*self.x/period))
        return y
 
+    def run_solver(self, u0: NDArray,
+                   tspan: NDArray,
+                   get_next_step_method: Callable):
+        n_steps = len(tspan) - 1
+        u = np.zeros([self.n_cells + 2, 2, n_steps + 1])
+
+        u[self.order:-self.order, :, 0] = u0
+        self.set_ghost_cells(u[:, :, 0])
+
+        for i in range(n_steps):
+            time_step = tspan[i + 1] - tspan[i]
+            u[:, :, i + 1] = get_next_step_method(u[:, :, i], time_step)
+            print(f"{tspan[i+1] =}")
+        return u[1:self.n_cells + 1, :, :]
+
     @staticmethod
-    def minmod(f, b, c):
+    def minmod(f: float, b: float, c: float):
         if f > 0 and b > 0:
             return min(f, b, c)
         if f < 0 and b < 0:
@@ -57,7 +77,7 @@ class BasePDESolver1D(ABC):
 
         return 0
 
-    def dudx(self, um1, u, up1, h, theta):
+    def dudx(self, um1: float, u: float, up1: float, h: float, theta: float):
         f = theta*(up1-u)/h
         b = theta*(u-um1)/h
         c = (up1 - um1) / (2 * h)
@@ -65,7 +85,7 @@ class BasePDESolver1D(ABC):
         d = self.minmod(f, b, c)
         return d
 
-    def plot_solution(self, ys, n_times_stamps=4, t_max=None):
+    def plot_solution(self, ys: List[NDArray], n_times_stamps: int = 4, t_max: float = None):
         n_solutions = len(ys)
         max_index = ys[0].shape[1]-1
         t_indices = max_index / (n_times_stamps-1) * np.arange(0, n_times_stamps)

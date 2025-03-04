@@ -23,6 +23,18 @@ class BasePDESolver1D(ABC):
     def get_solution(self, u: NDArray, tspan: NDArray, method: str ='cu2'):
         pass
 
+    @abstractmethod
+    def set_dt(self):
+        pass
+
+    @abstractmethod
+    def get_next_step_method(self, key):
+        pass
+
+    @abstractmethod
+    def get_flux_method(self, key):
+        pass
+
     def set_ghost_cells(self, u: NDArray):
         assert self.bc in ('periodic', 'wall'), f"{self.bc} is an invalid boundary condition"
         if self.bc == 'periodic':
@@ -72,6 +84,32 @@ class BasePDESolver1D(ABC):
             u[:, :, i + 1] = get_next_step_method(u[:, :, i], time_step, flux_function)
             print(f"{tspan[i+1] =}")
         return u[1:self.n_cells + 1, :, :]
+
+    def get_ssp_rk3_next_step(self, u, time_step, flux_function):
+        t = 0
+        dt = self.set_dt()
+
+        u1 = np.zeros_like(u)
+        u2 = np.zeros_like(u)
+        while t < time_step - 1e-10:
+            # first stage
+            flux = flux_function(u)
+            u1[1:-1, :] = u[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :])
+            self.set_ghost_cells(u1)
+
+            # second stage
+            flux = flux_function(u1)
+            u2[1:-1, :] = .75*u[1:-1, :] + .25*(u1[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
+            self.set_ghost_cells(u2)
+
+            # third stage
+            flux = flux_function(u2)
+            u[1:-1, :] = (1/3.0) * u[1:-1, :] + (2/3.0) * (u2[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
+            self.set_ghost_cells(u)
+
+            t += min(dt, time_step - t)
+
+        return u
 
     def get_linear_cell_boundary_approximation(self, u, theta):
         u_right = np.zeros([self.n_cells + 1])  # right of boundary limit
@@ -194,5 +232,75 @@ class BasePDESolver1D(ABC):
                                       func=update,
                                       frames=n_frames,
                                       interval=100,
+                                      repeat=False)
+        plt.show()
+
+    def run_with_animator(self, n_steps, solution_data, t_max, equation: str):
+        v0 = self.trig_initial_condition()
+        w0 = self.trig_initial_condition()
+
+        tspan = np.linspace(0, t_max, n_steps + 1)
+
+        u = np.zeros((self.n_cells+2, 2, n_steps+1))
+        u0 = np.stack((v0, w0), axis=1)
+
+        y_min = np.min(u0)
+        y_max = np.max(u0)
+        y_range = y_max-y_min
+
+        fig, ax = plt.subplots()
+        ticksize = 12
+        labelsize = 14
+
+        for sol in solution_data:
+            u[1:self.n_cells + 1, :, 0] = u0.copy()
+            sol.set_solution(u[1:self.n_cells + 1, :, :].copy())
+            for j in range(self.n_states):
+                sol.plot_solution(j, 0, self.x)
+
+        t = 0
+        plt.title(f"{equation}: t = {t: .2f}")
+
+        plt.ylim(y_min - .1 * y_range, y_max + .1 * y_range)
+        plt.xlabel('x', fontsize=labelsize)
+        plt.ylabel('y', fontsize=labelsize)
+        plt.xticks(fontsize=ticksize)
+        plt.yticks(fontsize=ticksize)
+        plt.legend(loc='upper right')
+        # plt.pause(1)
+
+        self.n_ghost_cells = 1
+
+        u = np.zeros([self.n_cells + 2, self.n_states, n_steps + 1])
+
+        def update(frame):
+            fig.clear()
+
+            for sol in solution_data:
+                u[self.n_ghost_cells:-self.n_ghost_cells, :, frame] = sol.solution[:, :, frame].copy()
+                self.set_ghost_cells(u[:, :, 0])
+                time_step = tspan[frame + 1] - tspan[frame]
+                get_next_step_method = self.get_next_step_method(sol.method)
+                flux_function = self.get_flux_method(sol.method)
+                u[:, :, frame + 1] = get_next_step_method(u[:, :, frame], time_step, flux_function)
+                sol.solution[:, :, frame + 1] = u[1:self.n_cells + 1, :, frame+1].copy()
+                for j in range(self.n_states):
+                    sol.plot_solution(j, frame+1, self.x)
+
+            t = t_max * (frame+1) / n_steps
+            plt.title(f"{equation}: t = {t: .2f}")
+
+            plt.ylim(y_min - .1 * y_range, y_max + .1 * y_range)
+            plt.xlabel('x', fontsize=labelsize)
+            plt.ylabel('y', fontsize=labelsize)
+            plt.xticks(fontsize=ticksize)
+            plt.yticks(fontsize=ticksize)
+            plt.legend(loc='upper right')
+            return None
+
+        ani = animation.FuncAnimation(fig=fig,
+                                      func=update,
+                                      frames=n_steps,
+                                      interval=10,
                                       repeat=False)
         plt.show()

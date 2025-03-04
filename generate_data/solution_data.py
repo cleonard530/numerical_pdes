@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 
+
 class SolutionData:
     def __init__(self, method, labels=None):
         self.method = method

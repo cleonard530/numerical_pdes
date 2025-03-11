@@ -1,70 +1,34 @@
 import numpy as np
+from numpy.typing import NDArray
+from typing import Callable, Tuple, List
 
-from generate_data.base_pde_solver_1d import BasePDESolver1D
-from generate_data.solution_data import SolutionData
+from base_solvers import BasePDESolver1D
+from solution_data import SolutionData
+from utils import get_next_step_o1, get_ssp_rk3_next_step
+from utils.functions import trig_function
 
 
 class WaveEquationSolver(BasePDESolver1D):
-    def __init__(self, ax, bx, nx, n_states, wave_speed, bc='periodic'):
-        super().__init__(ax, bx, nx, n_states, bc)
+    def __init__(self, ax: float, bx: float, nx: int, n_states: int, wave_speed: float, bc: str = 'periodic'):
+        super().__init__(equation='Wave Equation', ax=ax, bx=bx, nx=nx, n_states=n_states, bc=bc)
         self.wave_speed = wave_speed
 
-    def get_solution(self, u0, tspan, method='cu2'):
+    def get_solution(self, u0: NDArray, tspan: NDArray, method: str = 'cu2') -> NDArray:
         if method == 'uw1':
             self.n_ghost_cells = 1
-            u = self.run_solver(u0, tspan, self.get_uw_next_step_o1, self.get_uw_flux_o1)
+            u = self.run_solver(u0, tspan, get_next_step_o1, self.get_uw_flux_o1)
         elif method == 'uw2':
             self.n_ghost_cells = 1
-            u = self.run_solver(u0, tspan, self.get_ssp_rk3_next_step, self.get_uw_flux_o2)
+            u = self.run_solver(u0, tspan, get_ssp_rk3_next_step, self.get_uw_flux_o2)
         else:
-            assert False, f'method {method} is unrecognized.'
+            raise TypeError(f'method {method} is unrecognized.')
         return u
 
-    def get_uw_next_step_o1(self, u, time_step, flux_function):
-        t = 0
-        dt = .5 * self.dx / self.wave_speed
-
-        while t < time_step - 1e-10:
-            t += min(dt, time_step - t)
-
-            flux = flux_function(u)  # self.get_uw_flux_o1(u)
-            u[1:-1, 0] = u[1:-1, 0] - (dt / self.dx) * (flux[1:, 0] - flux[:-1, 0])
-            u[1:-1, 1] = u[1:-1, 1] - (dt / self.dx) * (flux[1:, 1] - flux[:-1, 1])
-            self.set_ghost_cells(u)
-
-        return u
-
-    def set_dt(self):
+    def set_dt(self) -> float:
         dt = .5 * self.dx / self.wave_speed
         return dt
 
-    # def get_ssp_rk3_next_step(self, u, time_step, flux_function):
-    #     t = 0
-    #     dt = .5 * self.dx / self.wave_speed
-    #
-    #     u1 = np.zeros_like(u)
-    #     u2 = np.zeros_like(u)
-    #     while t < time_step - 1e-10:
-    #         # first stage
-    #         flux = flux_function(u)  #self.get_uw_flux_o2(u)
-    #         u1[1:-1, :] = u[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :])
-    #         self.set_ghost_cells(u1)
-    #
-    #         # second stage
-    #         flux = flux_function(u1)
-    #         u2[1:-1, :] = .75*u[1:-1, :] + .25*(u1[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
-    #         self.set_ghost_cells(u2)
-    #
-    #         # third stage
-    #         flux = flux_function(u2)
-    #         u[1:-1, :] = (1/3.0) * u[1:-1, :] + (2/3.0) * (u2[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
-    #         self.set_ghost_cells(u)
-    #
-    #         t += min(dt, time_step - t)
-    #
-    #     return u
-
-    def get_cu_next_step_o2(self, u, time_step):
+    def get_cu_next_step_o2(self, u: NDArray, time_step: float) -> NDArray:
         t = 0
         dt = .5 * self.dx / self.wave_speed
 
@@ -90,7 +54,7 @@ class WaveEquationSolver(BasePDESolver1D):
 
         return u
 
-    def get_uw_flux_o1(self, u):
+    def get_uw_flux_o1(self, u: NDArray) -> NDArray:
         flux = np.zeros([self.n_cells + 1, 2])  # flux at cell interface
 
         flux[:, 0] = (1 / 2) * (self.wave_speed * u[:-1, 0] - u[:-1, 1] -
@@ -99,7 +63,7 @@ class WaveEquationSolver(BasePDESolver1D):
                                               self.wave_speed * u[1:, 0] - u[1:, 1])
         return flux
 
-    def get_uw_flux_o2(self, u):
+    def get_uw_flux_o2(self, u: NDArray) -> NDArray:
         flux = np.zeros([self.n_cells + 1, 2])  # flux at cell interface
 
         vp, vn = self.get_linear_cell_boundary_approximation(u[:, 0], 1.0)
@@ -110,7 +74,7 @@ class WaveEquationSolver(BasePDESolver1D):
 
         return flux
 
-    def get_cu2_flux_o2(self, u):
+    def get_cu2_flux_o2(self, u: NDArray) -> NDArray:
         flux = np.zeros([self.n_cells + 1, 2])  # flux at cell interface
 
         vp, vn = self.get_linear_cell_boundary_approximation(u[:, 0], 1.0)
@@ -121,62 +85,40 @@ class WaveEquationSolver(BasePDESolver1D):
 
         return flux
 
-    def get_next_step_method(self, key):
-        methods = {'uw1': self.get_uw_next_step_o1, 'uw2': self.get_ssp_rk3_next_step}
+    def get_eigen_values_df_du(self, u: NDArray) -> Tuple[float, float]:
+        # implement this method for any method that uses the central upwind method
+        sqrt_c = np.sqrt(self.wave_speed)
+        return sqrt_c, -sqrt_c
+
+    def get_next_step_method(self, key: str) -> Callable:
+        methods = {'uw1': get_next_step_o1, 'uw2': get_ssp_rk3_next_step}
         return methods[key]
 
-    def get_flux_method(self, key):
+    def get_flux_method(self, key: str) -> Callable:
         flux_methods = {'uw1': self.get_uw_flux_o1, 'uw2': self.get_uw_flux_o2}
         return flux_methods[key]
 
-def run_animation():
-    ax = -np.pi
-    bx = np.pi
-    nx = 100
-    wave_speed = 1
+    def get_true_solution(self,
+                          a1: NDArray | List,
+                          b1: NDArray | List,
+                          a2: NDArray | List,
+                          b2: NDArray | List,
+                          tspan: NDArray):
+        ux = np.zeros((len(self.x), len(tspan)))
+        ut = np.zeros((len(self.x), len(tspan)))
+        period = self.bx-self.ax
 
-    solver = WaveEquationSolver(ax=ax,
-                                bx=bx,
-                                nx=nx,
-                                n_states=2,
-                                wave_speed=wave_speed)
+        for j, t in enumerate(tspan):
+            ux[:, j] = .5 * (trig_function(self.x, a=a1, b=b1, period=period, t=-t) +
+                             trig_function(self.x, a=a1, b=b1, period=period, t=t) +
+                             trig_function(self.x, a=a2, b=b2, period=period, t=t) -
+                             trig_function(self.x, a=a2, b=b2, period=period, t=-t))
 
-    v0 = solver.trig_initial_condition()
-    w0 = solver.trig_initial_condition()
+            ut[:, j] = .5 * (trig_function(self.x, a=a1, b=b1, period=period, t=t) -
+                             trig_function(self.x, a=a1, b=b1, period=period, t=-t) +
+                             trig_function(self.x, a=a2, b=b2, period=period, t=t) +
+                             trig_function(self.x, a=a2, b=b2, period=period, t=-t))
 
-    t_max = 1
-    n_steps = 10
-    tspan = np.linspace(0, t_max, n_steps+1)
-    u0 = np.stack((v0, w0), axis=1)
-    solution_data = [SolutionData('uw1', labels=['ux', 'ut']),
-                     SolutionData('uw2', labels=['ux', 'ut'])]
-    for sol in solution_data:
-        sol.set_solution(solver.get_solution(u0, tspan, method=sol.method))
+        u = np.stack((ux, ut), axis=1)
 
-    solver.plot_animation(solution_data, t_max, equation='Wave Equation')
-    # solver.plot_solution(solutions, t_max=t_max)
-
-
-def run_animation2():
-    ax = -np.pi
-    bx = np.pi
-    nx = 100
-    wave_speed = 1
-
-    solver = WaveEquationSolver(ax=ax,
-                                bx=bx,
-                                nx=nx,
-                                n_states=2,
-                                wave_speed=wave_speed)
-
-    t_max = 2
-    n_steps = 10
-
-    solution_data = [SolutionData('uw1', labels=['ux', 'ut']),
-                     SolutionData('uw2', labels=['ux', 'ut'])]
-    solver.run_with_animator(n_steps, solution_data, t_max, 'Wave Equation')
-
-
-
-if __name__ == '__main__':
-    run_animation2()
+        return SolutionData('true', n_states=2, labels=['ux', 'ut'], solution=u)

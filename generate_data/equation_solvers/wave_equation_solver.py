@@ -2,21 +2,21 @@ import numpy as np
 from numpy.typing import NDArray
 from typing import Callable, Tuple, List
 
-from base_solvers import BasePDESolver1D
+from equation_solvers import BasePDESolver1D
 from solution_data import SolutionData
-from utils import get_next_step_o1, get_ssp_rk3_next_step
+from utils import get_next_step_o1_explicit, get_ssp_rk3_next_step
 from utils.functions import trig_function
 
 
 class WaveEquationSolver(BasePDESolver1D):
-    def __init__(self, ax: float, bx: float, nx: int, n_states: int, wave_speed: float, bc: str = 'periodic'):
-        super().__init__(equation='Wave Equation', ax=ax, bx=bx, nx=nx, n_states=n_states, bc=bc)
+    def __init__(self, ax: float, bx: float, n_cells: int, wave_speed: float, bc: str = 'periodic'):
+        super().__init__(equation='Wave Equation', ax=ax, bx=bx, n_cells=n_cells, n_states=2, bc=bc)
         self.wave_speed = wave_speed
 
     def get_solution(self, u0: NDArray, tspan: NDArray, method: str = 'cu2') -> NDArray:
         if method == 'uw1':
             self.n_ghost_cells = 1
-            u = self.run_solver(u0, tspan, get_next_step_o1, self.get_uw_flux_o1)
+            u = self.run_solver(u0, tspan, get_next_step_o1_explicit, self.get_uw_flux_o1)
         elif method == 'uw2':
             self.n_ghost_cells = 1
             u = self.run_solver(u0, tspan, get_ssp_rk3_next_step, self.get_uw_flux_o2)
@@ -24,35 +24,10 @@ class WaveEquationSolver(BasePDESolver1D):
             raise TypeError(f'method {method} is unrecognized.')
         return u
 
-    def set_dt(self) -> float:
+    def set_dt(self, u: NDArray, is_explicit=True) -> float:
+
         dt = .5 * self.dx / self.wave_speed
         return dt
-
-    def get_cu_next_step_o2(self, u: NDArray, time_step: float) -> NDArray:
-        t = 0
-        dt = .5 * self.dx / self.wave_speed
-
-        u1 = np.zeros_like(u)
-        u2 = np.zeros_like(u)
-        while t < time_step - 1e-10:
-            # first stage
-            flux = self.get_uw_flux_o2(u)
-            u1[1:-1, :] = u[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :])
-            self.set_ghost_cells(u1)
-
-            # second stage
-            flux = self.get_uw_flux_o2(u1)
-            u2[1:-1, :] = .75*u[1:-1, :] + .25*(u1[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
-            self.set_ghost_cells(u2)
-
-            # third stage
-            flux = self.get_uw_flux_o2(u2)
-            u[1:-1, :] = (1/3.0) * u[1:-1, :] + (2/3.0) * (u2[1:-1, :] - (dt / self.dx) * (flux[1:, :] - flux[:-1, :]))
-            self.set_ghost_cells(u)
-
-            t += min(dt, time_step - t)
-
-        return u
 
     def get_uw_flux_o1(self, u: NDArray) -> NDArray:
         flux = np.zeros([self.n_cells + 1, 2])  # flux at cell interface
@@ -91,7 +66,7 @@ class WaveEquationSolver(BasePDESolver1D):
         return sqrt_c, -sqrt_c
 
     def get_next_step_method(self, key: str) -> Callable:
-        methods = {'uw1': get_next_step_o1, 'uw2': get_ssp_rk3_next_step}
+        methods = {'uw1': get_next_step_o1_explicit, 'uw2': get_ssp_rk3_next_step}
         return methods[key]
 
     def get_flux_method(self, key: str) -> Callable:

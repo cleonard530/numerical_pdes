@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from solution_data import SolutionData
-from base_solvers import BasePDESolver1D
+from equation_solvers import BasePDESolver1D
 
 
 class SolutionPlotter:

@@ -21,3 +21,18 @@ def trig_function(x: NDArray,
         y = y + (1 / i) * (a[i - 1] * np.cos(2*np.pi * i * (x+t) / period) +
                            b[i - 1] * np.sin(2*np.pi * i * (x+t) / period))
     return y
+
+
+def piecewise_constant(n_cells: int, u_left: float | None = None, u_right: float | None = None):
+    n2 = n_cells // 2
+    if u_left is None:
+        u_left = np.random.uniform(-1, 1)
+    if u_right is None:
+        u_right = np.random.uniform(-1, 1)
+
+    u = np.zeros(n_cells)
+    u[:n2] = u_left
+    u[n2:] = u_right
+
+    return u
+

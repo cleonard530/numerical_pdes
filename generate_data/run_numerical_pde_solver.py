@@ -1,13 +1,13 @@
-from wave_equation.wave_equation_solver import WaveEquationSolver
+from equation_solvers import WaveEquationSolver, BurgersEquationSolver
 from solution_data import SolutionData
 import numpy as np
 
-from utils.functions import trig_function
+from utils.functions import trig_function, piecewise_constant
 from utils import errors
 from utils.plot_solutions import SolutionPlotter
 
 
-def main():
+def main_wave_equation():
     ax = -np.pi
     bx = np.pi
     nx = 50
@@ -15,8 +15,7 @@ def main():
 
     solver = WaveEquationSolver(ax=ax,
                                 bx=bx,
-                                nx=nx,
-                                n_states=2,
+                                n_cells=nx,
                                 wave_speed=wave_speed)
 
     a1 = [-0.4, 1.0, -0.4]
@@ -52,16 +51,43 @@ def main():
     solution_plotter.plot_solutions(solution_data, title=solver.equation, n_times_stamps=2, t_max=t_max)
 
 
+def main_burgers_equation():
+    ax = -np.pi
+    bx = np.pi
+    nx = 100
+    diff_coef = 0
+
+    solver = BurgersEquationSolver(ax=ax,
+                                   bx=bx,
+                                   n_cells=nx,
+                                   diff_coef=diff_coef,
+                                   bc='wall')
+    u_left = -0.2
+    u_right = 0.6
+    u0 = np.zeros((nx, 1))
+    u0[:, 0] = piecewise_constant(nx, u_left=u_left, u_right=u_right)
+
+    t_max = 4
+    n_steps = 10
+    tspan = np.linspace(0, t_max, n_steps + 1)
+
+    solution_data = [SolutionData('cu1', n_states=1, labels=['u'])]
+    for sol in solution_data:
+        sol.set_solution(solver.get_solution(u0, tspan, method=sol.method))
+
+    solution_plotter = SolutionPlotter(ax=ax, bx=bx)
+    solution_plotter.plot_solutions(solution_data, title=solver.equation, n_times_stamps=5, t_max=t_max)
+
+
 def run_plot_animation():
     ax = -np.pi
     bx = np.pi
     nx = 200
     wave_speed = 1
 
-    solver = WaveEquationSolver(ax=ax,
+    solver = BurgersEquationSolver(ax=ax,
                                 bx=bx,
-                                nx=nx,
-                                n_states=2,
+                                n_cells=nx,
                                 wave_speed=wave_speed)
 
     a1 = [-0.4, 1.0, -0.4]
@@ -96,8 +122,7 @@ def run_animation2():
 
     solver = WaveEquationSolver(ax=ax,
                                 bx=bx,
-                                nx=nx,
-                                n_states=2,
+                                n_cells=nx,
                                 wave_speed=wave_speed)
 
     t_max = 2
@@ -120,6 +145,7 @@ def run_animation2():
 
 
 if __name__ == '__main__':
-    main()
-    run_plot_animation()
-    run_animation2()
+    # main_wave_equation()
+    main_burgers_equation()
+    # run_plot_animation()
+    # run_animation2()

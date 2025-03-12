@@ -2,12 +2,12 @@ import numpy as np
 from numpy.typing import NDArray
 from typing import Callable
 
-from base_solvers.base_pde_solver_1d import BasePDESolver1D
+from equation_solvers.base_pde_solver_1d import BasePDESolver1D
 
 
-def get_next_step_o1(solver: BasePDESolver1D, u: NDArray, time_step: float, flux_function: Callable):
+def get_next_step_o1_explicit(solver: BasePDESolver1D, u: NDArray, time_step: float, flux_function: Callable):
     t = 0
-    dt = solver.set_dt()
+    dt = solver.set_dt(u, is_explicit=True)
     n_gc = solver.n_ghost_cells
 
     while t < time_step - 1e-10:
@@ -24,7 +24,8 @@ def get_next_step_o1(solver: BasePDESolver1D, u: NDArray, time_step: float, flux
 
 def get_ssp_rk3_next_step(solver: BasePDESolver1D, u: NDArray, time_step: float, flux_function: Callable):
     t = 0
-    dt = solver.set_dt()
+    lambda_max = np.max(np.abs(solver.get_eigen_values_df_du(u)))
+    dt = solver.set_dt(lambda_max, is_explicit=True)
     n_gc = solver.n_ghost_cells
 
     u1 = np.zeros_like(u)

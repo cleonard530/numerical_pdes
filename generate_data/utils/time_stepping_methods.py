@@ -13,7 +13,7 @@ def get_next_step_o1_explicit(solver: BasePDESolver1D, u: NDArray, time_step: fl
     while t < time_step - 1e-10:
         dt = min(dt, time_step - t)
 
-        flux = flux_function(u)  # self.get_uw_flux_o1(u)
+        flux = flux_function(u)
         u[n_gc:-n_gc, :] = u[n_gc:-n_gc, :] - (dt / solver.dx) * (flux[1:, :] - flux[:-1, :])
         solver.set_ghost_cells(u)
 
@@ -24,8 +24,7 @@ def get_next_step_o1_explicit(solver: BasePDESolver1D, u: NDArray, time_step: fl
 
 def get_ssp_rk3_next_step(solver: BasePDESolver1D, u: NDArray, time_step: float, flux_function: Callable):
     t = 0
-    lambda_max = np.max(np.abs(solver.get_eigen_values_df_du(u)))
-    dt = solver.set_dt(lambda_max, is_explicit=True)
+    dt = solver.set_dt(u, is_explicit=True)
     n_gc = solver.n_ghost_cells
 
     u1 = np.zeros_like(u)

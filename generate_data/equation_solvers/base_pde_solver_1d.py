@@ -80,14 +80,14 @@ class BasePDESolver1D(ABC):
             u_right[self.n_cells] = u_left[self.n_cells]
 
     def get_linear_cell_boundary_approximation(self, u: NDArray, theta: float) -> Tuple[NDArray, NDArray]:
-        u_right = np.zeros([self.n_cells + 1])  # right of boundary limit
-        u_left = np.zeros([self.n_cells + 1])  # left of boundary limit
+        u_right = np.zeros([self.n_cells + 1])  # right (negative limit) of boundary limit
+        u_left = np.zeros([self.n_cells + 1])  # left (positive limit) of boundary limit
 
         for i in range(self.n_cells):
-            offset = self.n_ghost_cells - 1
-            du = self.du_dx(u[offset + i], u[offset + i + 1], u[offset + i + 2], theta)
-            u_left[i + 1] = u[offset + i + 1] + du * (self.dx / 2)
-            u_right[i] = u[offset + i + 1] - du * (self.dx / 2)
+            center_cell = self.n_ghost_cells + i
+            du = self.du_dx(u[center_cell-1], u[center_cell], u[center_cell+1], theta)
+            u_left[i + 1] = u[center_cell] + du * (self.dx / 2)
+            u_right[i] = u[center_cell] - du * (self.dx / 2)
         self.set_boundary_wall_ghost_cells(u_right=u_right, u_left=u_left)
 
         return u_right, u_left
@@ -98,8 +98,8 @@ class BasePDESolver1D(ABC):
 
         for i in range(self.n_cells+1):
             offset = self.n_ghost_cells - 1
-            u_left[i] = u[offset + i + 1]
-            u_right[i] = u[offset + i]
+            u_left[i] = u[offset + i]
+            u_right[i] = u[offset + i + 1]
         self.set_boundary_wall_ghost_cells(u_right=u_right, u_left=u_left)
 
         return u_right, u_left

@@ -10,7 +10,7 @@ from utils.plot_solutions import SolutionPlotter
 def main_wave_equation():
     ax = -np.pi
     bx = np.pi
-    nx = 50
+    nx = 200
     wave_speed = 1
 
     solver = WaveEquationSolver(ax=ax,
@@ -26,7 +26,7 @@ def main_wave_equation():
     b2 = [0.4, -0.7, -0.4]
     ut0 = trig_function(solver.x, a=a2, b=b2, period=bx-ax)
 
-    t_max = 2
+    t_max = 5
     n_steps = 20
     tspan = np.linspace(0, t_max, n_steps+1)
     u0 = np.stack((ux0, ut0), axis=1)
@@ -48,13 +48,13 @@ def main_wave_equation():
     print(f"{ux2_rel_error2 = }")
     print(f"{ut2_rel_error2 = }")
     solution_plotter = SolutionPlotter(ax=ax, bx=bx)
-    solution_plotter.plot_solutions(solution_data, title=solver.equation, n_times_stamps=2, t_max=t_max)
+    solution_plotter.plot_solutions(solution_data, title=solver.equation, n_times_stamps=4, t_max=t_max)
 
 
 def main_burgers_equation():
     ax = -np.pi
     bx = np.pi
-    nx = 100
+    nx = 500
     diff_coef = 0
 
     solver = BurgersEquationSolver(ax=ax,
@@ -67,11 +67,11 @@ def main_burgers_equation():
     u0 = np.zeros((nx, 1))
     u0[:, 0] = piecewise_constant(nx, u_left=u_left, u_right=u_right)
 
-    t_max = 4
+    t_max = 10
     n_steps = 10
     tspan = np.linspace(0, t_max, n_steps + 1)
 
-    solution_data = [SolutionData('cu1', n_states=1, labels=['u'])]
+    solution_data = [SolutionData('cu1', n_states=1, labels=['u']), SolutionData('cu2', n_states=1, labels=['u'])]
     for sol in solution_data:
         sol.set_solution(solver.get_solution(u0, tspan, method=sol.method))
 

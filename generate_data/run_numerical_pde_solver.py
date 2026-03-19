@@ -67,7 +67,7 @@ def main_burgers_equation():
     u0 = np.zeros((nx, 1))
     u0[:, 0] = piecewise_constant(nx, u_left=u_left, u_right=u_right)
 
-    t_max = 10
+    t_max = 1
     n_steps = 10
     tspan = np.linspace(0, t_max, n_steps + 1)
 
@@ -85,7 +85,7 @@ def run_plot_animation():
     nx = 200
     wave_speed = 1
 
-    solver = BurgersEquationSolver(ax=ax,
+    solver = WaveEquationSolver(ax=ax,
                                 bx=bx,
                                 n_cells=nx,
                                 wave_speed=wave_speed)
@@ -146,6 +146,6 @@ def run_animation2():
 
 if __name__ == '__main__':
     # main_wave_equation()
-    main_burgers_equation()
-    # run_plot_animation()
-    # run_animation2()
+    # main_burgers_equation()
+    run_plot_animation()
+    #run_animation2()

@@ -1,21 +1,35 @@
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from typing import List
 import numpy as np
 from numpy.typing import NDArray
+import os
+import re
 
 from solution_data import SolutionData
 from equation_solvers import BasePDESolver1D
 
 
 class SolutionPlotter:
-    def __init__(self, ax: float, bx: float, fig_num: int = 1, ticksize: int = 12, labelsize: int = 12):
+    def __init__(self, ax: float, bx: float, fig_num: int = 1, ticksize: int = 12, labelsize: int = 12,
+                 output_dir: str = "plots"):
         self.ax: float = ax
         self.bx: float = bx
         self.fig_num = fig_num
         self.fig, self.axes = None, None
         self.ticksize = ticksize
         self.labelsize = labelsize
+        self.output_dir = output_dir
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    @staticmethod
+    def _sanitize_filename(name: str) -> str:
+        name = name.lower().strip()
+        name = re.sub(r'[^\w\s-]', '', name)
+        name = re.sub(r'[\s]+', '_', name)
+        return name
 
     def plot_solutions(self, solution_data: List[SolutionData],
                        title: str,
@@ -38,7 +52,11 @@ class SolutionPlotter:
             self._set_plot_metadata(title=t_title,
                                     y_min=y_min,
                                     y_max=y_max)
-            plt.show()
+            filename = f"{self._sanitize_filename(title)}_t{t:.2f}.png"
+            filepath = os.path.join(self.output_dir, filename)
+            plt.savefig(filepath, dpi=150, bbox_inches='tight')
+            plt.close()
+            print(f"Saved: {filepath}")
 
     def plot_animation(self, solution_data: List[SolutionData], title: str, t_max: float) -> None:
         n_frames = solution_data[0].solution.shape[2]
@@ -66,7 +84,11 @@ class SolutionPlotter:
                                       frames=n_frames,
                                       interval=100,
                                       repeat=False)
-        plt.show()
+        filename = f"{self._sanitize_filename(title)}_animation.gif"
+        filepath = os.path.join(self.output_dir, filename)
+        ani.save(filepath, writer='pillow', fps=10)
+        plt.close()
+        print(f"Saved: {filepath}")
 
     def run_with_animator(self,
                           solver: BasePDESolver1D,
@@ -101,7 +123,10 @@ class SolutionPlotter:
         self._set_plot_metadata(title=f"{solver.equation}: t = {t: .2f}",
                                 y_min=y_min - .1 * y_range,
                                 y_max=y_max + .1 * y_range)
-        plt.show(block=False)
+        initial_filename = f"{self._sanitize_filename(solver.equation)}_initial_condition.png"
+        initial_filepath = os.path.join(self.output_dir, initial_filename)
+        plt.savefig(initial_filepath, dpi=150, bbox_inches='tight')
+        print(f"Saved: {initial_filepath}")
 
         u = np.zeros([solver.n_cells + 2, n_states, n_frames])
 
@@ -132,8 +157,11 @@ class SolutionPlotter:
                                       interval=100,
                                       repeat=False)
 
-        plt.show()
-        # ani.save("temp.mp4", fps=30, writer='ffmpeg')
+        filename = f"{self._sanitize_filename(solver.equation)}_live_simulation.gif"
+        filepath = os.path.join(self.output_dir, filename)
+        ani.save(filepath, writer='pillow', fps=10)
+        plt.close()
+        print(f"Saved: {filepath}")
 
     def _get_y_min_and_max(self, solution_data: List[SolutionData], range_amplifier=0.1):
         n_solutions = len(solution_data)

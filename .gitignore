@@ -32,3 +32,6 @@ Thumbs.db
 *.h5
 *.npy
 *.npz
+
+# Saved plots
+plots/

@@ -1,0 +1,16 @@
+{
+    "name": "Numerical PDEs",
+    "initializeCommand": "podman build -t numerical-pdes-dev -f .devcontainer/Dockerfile .",
+    "image": "numerical-pdes-dev",
+    "updateRemoteUserUID": false,
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/bin/python3.12"
+            }
+        }
+    }
+}

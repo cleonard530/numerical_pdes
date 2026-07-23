@@ -10,7 +10,8 @@ from numerical_pdes import (
     SSPRK3,
     WaveEquation1D,
     BurgersEquation1D,
-    PDESolver,
+    PDEProblem,
+    solve,
     SolutionData,
     SolutionPlotter,
 )
@@ -35,14 +36,14 @@ def main_wave_equation():
     n_steps = 20
     tspan = np.linspace(0, t_max, n_steps + 1)
 
-    solver_o1 = PDESolver(
+    problem_o1 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
         time_integrator=ForwardEuler(),
         reconstruction=ConstantReconstruction(),
     )
-    solver_o2 = PDESolver(
+    problem_o2 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
@@ -51,9 +52,9 @@ def main_wave_equation():
     )
 
     print("Running wave equation (O1)...")
-    result_o1 = solver_o1.solve(u0, tspan, label="uw1", state_labels=["ux", "ut"])
+    result_o1 = solve(problem_o1, u0, tspan, label="uw1", state_labels=["ux", "ut"])
     print("Running wave equation (O2)...")
-    result_o2 = solver_o2.solve(u0, tspan, label="uw2", state_labels=["ux", "ut"])
+    result_o2 = solve(problem_o2, u0, tspan, label="uw2", state_labels=["ux", "ut"])
 
     true_sol_array = equation.get_true_solution(mesh, a1, b1, a2, b2, tspan)
     result_true = SolutionData("true", n_states=2, labels=["ux", "ut"], solution=true_sol_array)
@@ -85,14 +86,14 @@ def main_burgers_equation():
     n_steps = 10
     tspan = np.linspace(0, t_max, n_steps + 1)
 
-    solver_o1 = PDESolver(
+    problem_o1 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
         time_integrator=ForwardEuler(),
         reconstruction=ConstantReconstruction(),
     )
-    solver_o2 = PDESolver(
+    problem_o2 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
@@ -101,9 +102,9 @@ def main_burgers_equation():
     )
 
     print("Running Burgers equation (O1)...")
-    result_o1 = solver_o1.solve(u0, tspan, label="cu1", state_labels=["u"])
+    result_o1 = solve(problem_o1, u0, tspan, label="cu1", state_labels=["u"])
     print("Running Burgers equation (O2)...")
-    result_o2 = solver_o2.solve(u0, tspan, label="cu2", state_labels=["u"])
+    result_o2 = solve(problem_o2, u0, tspan, label="cu2", state_labels=["u"])
 
     plotter = SolutionPlotter(mesh)
     plotter.plot_solutions(
@@ -132,14 +133,14 @@ def run_wave_animation():
     n_steps = 20
     tspan = np.linspace(0, t_max, n_steps + 1)
 
-    solver_o1 = PDESolver(
+    problem_o1 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
         time_integrator=ForwardEuler(),
         reconstruction=ConstantReconstruction(),
     )
-    solver_o2 = PDESolver(
+    problem_o2 = PDEProblem(
         equation=equation,
         mesh=mesh,
         bc=bc,
@@ -148,9 +149,9 @@ def run_wave_animation():
     )
 
     print("Running wave animation (O1)...")
-    result_o1 = solver_o1.solve(u0, tspan, label="uw1", state_labels=["ux", "ut"])
+    result_o1 = solve(problem_o1, u0, tspan, label="uw1", state_labels=["ux", "ut"])
     print("Running wave animation (O2)...")
-    result_o2 = solver_o2.solve(u0, tspan, label="uw2", state_labels=["ux", "ut"])
+    result_o2 = solve(problem_o2, u0, tspan, label="uw2", state_labels=["ux", "ut"])
 
     true_sol_array = equation.get_true_solution(mesh, a1, b1, a2, b2, tspan)
     result_true = SolutionData("true", n_states=2, labels=["ux", "ut"], solution=true_sol_array)

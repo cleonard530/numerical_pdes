@@ -7,7 +7,7 @@ from numerical_pdes.reconstruction import (
 )
 from numerical_pdes.time_integrators import TimeIntegrator, ForwardEuler, SSPRK3
 from numerical_pdes.equations import Equation, WaveEquation1D, BurgersEquation1D
-from numerical_pdes.solver import PDESolver
+from numerical_pdes.solver import PDEProblem, solve
 from numerical_pdes.solution import SolutionData
 from numerical_pdes.plotting import SolutionPlotter
 
@@ -26,7 +26,8 @@ __all__ = [
     "Equation",
     "WaveEquation1D",
     "BurgersEquation1D",
-    "PDESolver",
+    "PDEProblem",
+    "solve",
     "SolutionData",
     "SolutionPlotter",
 ]

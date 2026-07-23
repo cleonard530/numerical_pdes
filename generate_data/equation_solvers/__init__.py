@@ -1,3 +1,0 @@
-from equation_solvers.base_pde_solver_1d import BasePDESolver1D
-from equation_solvers.wave_equation_solver import WaveEquationSolver
-from equation_solvers.burgers_equation_solver import BurgersEquationSolver

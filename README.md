@@ -24,7 +24,6 @@ Each can be run at first order (`ConstantReconstruction` + `ForwardEuler`) or se
 │   ├── plotting.py              # SolutionPlotter: snapshot PNGs and animated GIFs
 │   └── utils/                   # Initial-condition generators and L1/L2 error metrics
 ├── scripts/run_simulation.py  # Runnable demo: wave equation and Burgers' equation
-├── generate_data/              # Older, legacy implementation of the same solvers (kept for reference)
 ├── pyproject.toml              # Package metadata (name: numerical-pdes)
 └── requirements.txt            # Pinned deps for the devcontainer
 ```

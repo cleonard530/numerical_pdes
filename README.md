@@ -30,12 +30,12 @@ Each can be run at first order (`ConstantReconstruction` + `ForwardEuler`) or se
 
 ## Installation
 
-Requires Python 3.10+.
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone <this-repo>
 cd time-stepping-neural-network
-pip install -e .
+uv pip install --system -e .
 ```
 
 ## Running the simulation

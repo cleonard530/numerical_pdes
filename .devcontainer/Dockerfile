@@ -10,12 +10,10 @@ COPY requirements.txt /tmp/requirements.txt
 RUN uv pip install --system --python python3.12 --no-cache -r /tmp/requirements.txt \
     && uv pip install --system --python python3.12 --no-cache torch \
         --index-url https://download.pytorch.org/whl/cpu \
-    && TORCH_CMAKE_PREFIX="$(python3.12 -c 'import torch; print(torch.utils.cmake_prefix_path)')" \
-    && ln -sfn "${TORCH_CMAKE_PREFIX}" /usr/local/share/torch-cmake \
     && rm /tmp/requirements.txt
 
 # So find_package(Torch) works without -DCMAKE_PREFIX_PATH=...
-ENV CMAKE_PREFIX_PATH=/usr/local/share/torch-cmake
+ENV CMAKE_PREFIX_PATH=/usr/local/lib64/python3.12/site-packages/torch/share/cmake
 
 RUN ln -sf /usr/bin/python3.12 /usr/local/bin/python \
     && ln -sf /usr/bin/python3.12 /usr/local/bin/python3

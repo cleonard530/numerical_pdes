@@ -1,42 +1,42 @@
+#pragma once
 #include <torch/torch.h>
 
 
 class Mesh {
     private:
-        int n_dim;
+        int n_dim_;
 
-        int n_cells;
+        int n_cells_;
 
     public:
-        Mesh(int n_dim_in, int n_cells_in)
-            : n_dim(n_dim_in), n_cells(n_cells_in) {}
+        Mesh(int n_dim, int n_cells)
+            : n_dim_(n_dim), n_cells_(n_cells) {}
 
-        int GetNDim() const { return n_dim; }
-        void SetNDim(int n_dim_in) { n_dim = n_dim_in; }
+        int GetNDim() const { return n_dim_; }
+        void SetNDim(int n_dim) { n_dim_ = n_dim; }
 
-        int GetNCells() const { return n_cells; }
-        void SetNCells(int n_cells_in) { n_cells = n_cells_in; }
+        int GetNCells() const { return n_cells_; }
+        void SetNCells(int n_cells) { n_cells_ = n_cells; }
 };
 
 
 class Mesh1d : public Mesh {
     private:
-        double x_left;
-        double x_right;
-        double dx;
-        torch::Tensor cell_centers;
-
+        double x_left_;
+        double x_right_;
+        double dx_;
+        torch::Tensor cell_centers_;
 
     public:
-        Mesh1d(double x_left_in, double x_right_in, int n_cells_in)
-            : Mesh(1, n_cells_in),
-              x_left(x_left_in),
-              x_right(x_right_in),
-              dx((x_right_in-x_left_in) / n_cells_in),
-              cell_centers(torch::linspace(
-                x_left_in + dx / 2.0,
-                x_right_in - dx / 2.0,
-                n_cells_in,
+        Mesh1d(double x_left, double x_right, int n_cells)
+            : Mesh(1, n_cells),
+              x_left_(x_left),
+              x_right_(x_right),
+              dx_((x_right-x_left) / n_cells),
+              cell_centers_(torch::linspace(
+                x_left + dx_ / 2.0,
+                x_right - dx_ / 2.0,
+                n_cells,
                 torch::kFloat64)) {}
 
 

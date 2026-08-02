@@ -3,7 +3,9 @@
 #include <torch/torch.h>
 
 #include "mesh.h"
-
+#include "boundary_conditions.h"
+#include "reconstruction.h"
+#include "equations.h"
 
 constexpr double pi = 3.14159265358979323846;
 

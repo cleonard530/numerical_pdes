@@ -11,6 +11,7 @@ find_package(Torch REQUIRED)
 
 set(CSRC_SOURCES
     mesh.cpp
+    boundary_conditions.cpp
     # burgers_equation.cpp
     # ...
 )

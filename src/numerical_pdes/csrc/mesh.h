@@ -38,7 +38,12 @@ class Mesh1d : public Mesh {
                 x_right - dx_ / 2.0,
                 n_cells,
                 torch::kFloat64)) {}
+        
+        double GetDx() const { return dx_; }
+        void SetDx(double dx) { dx_ = dx; }
 
+        torch::Tensor GetCellCenters() const { return cell_centers_; }
+        void SetCellCenters(torch::Tensor cell_centers) { cell_centers_ = cell_centers; }
 
         double Period();
 };

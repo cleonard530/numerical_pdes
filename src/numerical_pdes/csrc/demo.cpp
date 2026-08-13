@@ -58,6 +58,7 @@ void demo_boundary_condition() {
     std::cout << "u_left1 = " << u_left << std::endl;
     std::cout << "u_right1 = " << u_right << std::endl;
 
-
     return;
 }
+
+

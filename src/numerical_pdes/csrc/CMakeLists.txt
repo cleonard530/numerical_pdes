@@ -10,11 +10,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Torch REQUIRED)
 
 set(CSRC_SOURCES
-    mesh.cpp
-    boundary_conditions.cpp
-    reconstruction.cpp
-    # burgers_equation.cpp
-    # ...
+  mesh.cpp
+  boundary_conditions.cpp
+  reconstruction.cpp
+  equations.cpp
+  # burgers_equation.cpp
+  # ...
 )
 
 add_executable(demo demo.cpp ${CSRC_SOURCES})

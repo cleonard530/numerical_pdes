@@ -45,5 +45,5 @@ class Mesh1d : public Mesh {
         torch::Tensor GetCellCenters() const { return cell_centers_; }
         void SetCellCenters(torch::Tensor cell_centers) { cell_centers_ = cell_centers; }
 
-        double Period();
+        double GetPeriod();
 };

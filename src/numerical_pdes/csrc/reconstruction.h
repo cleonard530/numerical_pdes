@@ -15,12 +15,13 @@ class Reconstruction {
 
         virtual ~Reconstruction() = default;
 
-        virtual std::tuple<torch::Tensor, torch::Tensor> reconstruct(
+        virtual void reconstruct(
             const torch::Tensor& u,
             const Mesh1d& mesh,
             const int n_ghost_cells,
-            const BoundaryCondition& bc
-        ) = 0;
+            const BoundaryCondition& bc,
+            torch::Tensor& u_right,
+            torch::Tensor& u_left) const = 0;
 };
 
 
@@ -29,12 +30,13 @@ class ConstantReconstruction : public Reconstruction {
         ConstantReconstruction(int required_ghost_cells = 1)
             : Reconstruction(required_ghost_cells) {} 
 
-        std::tuple<torch::Tensor, torch::Tensor> reconstruct(
+        void reconstruct(
             const torch::Tensor& u,
             const Mesh1d& mesh,
             const int n_ghost_cells,
-            const BoundaryCondition& bc
-        ) override;
+            const BoundaryCondition& bc,
+            torch::Tensor& u_right,
+            torch::Tensor& u_left) const override;
 };
         
 
@@ -44,18 +46,19 @@ class MinmodLinearReconstruction : public Reconstruction {
         double theta_;
 
         // may add these two methods to a seperate num_pde math help namespace
-        double _du_dx(double um1, double u, double up1, double dx);
+        double _du_dx(double um1, double u, double up1, double dx) const;
 
-        double _minmod(double a, double b, double c);
+        double _minmod(double a, double b, double c) const;
 
     public:
         MinmodLinearReconstruction(int required_ghost_cells = 1, double theta = 1.0)
             : Reconstruction(required_ghost_cells), theta_(theta) {} 
 
-        std::tuple<torch::Tensor, torch::Tensor> reconstruct(
+        void reconstruct(
             const torch::Tensor& u,
             const Mesh1d& mesh,
             const int n_ghost_cells,
-            const BoundaryCondition& bc
-        ) override;
+            const BoundaryCondition& bc,
+            torch::Tensor& u_right,
+            torch::Tensor& u_left) const override;
 };

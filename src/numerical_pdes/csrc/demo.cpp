@@ -14,6 +14,7 @@ void demo_reconstruction();
 void demo_mesh();
 void demo_equations_BE();
 void demo_equations_wave();
+void run_wave_equation();
 
 int main() {
   // demo_mesh();
@@ -24,7 +25,9 @@ int main() {
 
   // demo_equations_BE();
 
-  demo_equations_wave();
+  // demo_equations_wave();
+
+  run_wave_equation();
 
   return 0;
 }
@@ -289,4 +292,41 @@ void demo_equations_wave() {
   std::cout << "u.size(0) = " << u.size(0) << std::endl;
   std::cout << "u.size(1) = " << u.size(1) << std::endl;
   std::cout << "flux = " << flux << std::endl;
+}
+
+
+void run_wave_equation() {
+  int n_cells = 10;
+  double lb = -pi;
+  double rb = pi;
+  double wave_speed = 1.0;
+  int n_ghost_cells = 1;
+  double t_max = 5.0;
+  int n_steps = 20;
+
+
+  Mesh1d mesh = Mesh1d(lb, rb, n_cells);
+  BoundaryCondition* bc = new PeriodicBC();
+  WaveEquation1d wave_equation = WaveEquation1d(wave_speed);
+
+  torch::Tensor ux0 = torch::sin(mesh.GetCellCenters());
+  torch::Tensor ut0 = torch::cos(mesh.GetCellCenters());
+
+  std::cout << "ux0.dim() = " << ux0.dim() << std::endl;
+  std::cout << "ux0.size(0) = " << ux0.size(0) << std::endl;
+
+  torch::Tensor u0 = torch::stack({ux0, ut0}, 0);
+
+  std::cout << "u0.dim() = " << u0.dim() << std::endl;
+  std::cout << "u0.size(0) = " << u0.size(0) << std::endl;
+  std::cout << "u0.size(1) = " << u0.size(1) << std::endl;
+
+
+  torch::Tensor x = mesh.GetCellCentersWithGhostCells(n_ghost_cells); 
+
+  std::cout << "x = " << x << std::endl;
+
+  torch::Tensor tspan = torch::linspace(0, t_max, n_steps+1, torch::kFloat64);
+
+  std::cout << "tspan = " << tspan << std::endl;
 }

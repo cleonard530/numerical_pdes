@@ -6,6 +6,7 @@
 #include "mesh.h"
 #include "boundary_conditions.h"
 #include "reconstruction.h"
+#include "equations.h"
 
 
 class TimeIntegrator {
@@ -13,14 +14,18 @@ class TimeIntegrator {
     virtual void step(
       torch::Tensor& u,
       double dt,
-      BoundaryCondition boundary_condition,
+      const Equation& equation, 
+      const Mesh1d& mesh, 
+      const Reconstruction& reconstruction,
+      const BoundaryCondition& boundary_condition,
       int n_ghost_cells) const = 0;
 
     virtual torch::Tensor compute_rhs_1d(
-      Equations equation, 
-      Mesh1d mesh, 
-      Reconstruction reconstruction,
-      BoundaryCondition boundary_condition,
+      const torch::Tensor& u,
+      const Equation& equation, 
+      const Mesh1d& mesh, 
+      const Reconstruction& reconstruction,
+      const BoundaryCondition& boundary_condition,
       int n_ghost_cells) const;
 };
 
@@ -30,7 +35,10 @@ class ForwardEuler : TimeIntegrator {
     void step(
       torch::Tensor& u,
       double dt,
-      BoundaryCondition boundary_condition,
+      const Equation& equation, 
+      const Mesh1d& mesh, 
+      const Reconstruction& reconstruction,
+      const BoundaryCondition& boundary_condition,
       int n_ghost_cells) const override;
 };
 
@@ -40,6 +48,9 @@ class SSPRK3 : TimeIntegrator {
     void step(
       torch::Tensor& u,
       double dt,
-      BoundaryCondition boundary_condition,
+      const Equation& equation, 
+      const Mesh1d& mesh, 
+      const Reconstruction& reconstruction,
+      const BoundaryCondition& boundary_condition,
       int n_ghost_cells) const override;
 };

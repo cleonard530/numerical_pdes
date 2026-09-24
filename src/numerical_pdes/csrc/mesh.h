@@ -46,4 +46,6 @@ class Mesh1d : public Mesh {
         void SetCellCenters(torch::Tensor cell_centers) { cell_centers_ = cell_centers; }
 
         double GetPeriod();
+
+        torch::Tensor GetCellCentersWithGhostCells(int n_ghost_cells) const;
 };

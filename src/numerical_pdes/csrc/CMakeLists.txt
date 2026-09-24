@@ -14,6 +14,7 @@ set(CSRC_SOURCES
   boundary_conditions.cpp
   reconstruction.cpp
   equations.cpp
+  time_integrators.cpp
   # burgers_equation.cpp
   # ...
 )

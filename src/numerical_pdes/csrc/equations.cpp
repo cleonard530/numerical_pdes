@@ -3,9 +3,9 @@
 
 // Equation
 
-std::tuple<double, double> Equation::get_eigenvalues(const torch::Tensor& u) { return {0, 0}; }
+std::tuple<double, double> Equation::get_eigenvalues(const torch::Tensor& u) const { return {0, 0}; }
 
-double Equation::compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) {
+double Equation::compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) const {
   double speed = get_max_wave_speed(u);
   if (speed < 1e-14) {
     return dx;
@@ -19,7 +19,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Equation:
     const Mesh1d& mesh,
     const Reconstruction& reconstruction,
     const BoundaryCondition& boundary_condition,
-    int n_ghost_cells) {
+    int n_ghost_cells) const {
   int n_cells = mesh.GetNCells();
 
   torch::Tensor a_negative = torch::zeros({n_cells + 1}, u.options());
@@ -41,7 +41,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> Equation:
 
 // Burgers Equation
 
-bool BurgersEquation1d::_is_viscous(double tol) {
+bool BurgersEquation1d::_is_viscous(double tol) const {
   if (diff_coef_ > tol) { return true; }
   else if (diff_coef_ >= 0) { return false; }
   TORCH_CHECK(false,
@@ -49,18 +49,18 @@ bool BurgersEquation1d::_is_viscous(double tol) {
 }
 
 
-double BurgersEquation1d::get_max_wave_speed(const torch::Tensor& u) {
+double BurgersEquation1d::get_max_wave_speed(const torch::Tensor& u) const {
   return torch::max(torch::abs(u)).item<double>();
 }
 
 
-std::tuple<double, double> BurgersEquation1d::get_eigenvalues(const torch::Tensor& u) {
+std::tuple<double, double> BurgersEquation1d::get_eigenvalues(const torch::Tensor& u) const {
   double u0 = u[0].item<double>();
   return {u0, u0};
 }
 
 
-double BurgersEquation1d::compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) {
+double BurgersEquation1d::compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) const {
   double dt = Equation::compute_cfl_dt(u, dx, cfl_number);
   if (_is_viscous()) {
       dt = std::min(dt, cfl_number * dx * dx / diff_coef_);
@@ -69,7 +69,7 @@ double BurgersEquation1d::compute_cfl_dt(const torch::Tensor& u, double dx, doub
 }
 
 
-torch::Tensor BurgersEquation1d::_get_physical_flux(torch::Tensor u) {
+torch::Tensor BurgersEquation1d::_get_physical_flux(torch::Tensor u) const {
   return torch::square(u) / 2.0;
 }
 
@@ -79,7 +79,7 @@ torch::Tensor BurgersEquation1d::compute_numerical_flux(
     const Mesh1d& mesh,
     const Reconstruction& reconstruction,
     const BoundaryCondition& boundary_condition,
-    int n_ghost_cells) {
+    int n_ghost_cells) const {
   int n_cells = mesh.GetNCells();
   torch::Tensor flux = torch::zeros({n_states_, n_cells + 1});
 
@@ -113,12 +113,12 @@ torch::Tensor BurgersEquation1d::compute_numerical_flux(
 
 // Wave Equation
 
-double WaveEquation1d::get_max_wave_speed(const torch::Tensor& u) {
+double WaveEquation1d::get_max_wave_speed(const torch::Tensor& u) const {
   return wave_speed_;
 }
 
 
-std::tuple<double, double> WaveEquation1d::get_eigenvalues(const torch::Tensor& u) {
+std::tuple<double, double> WaveEquation1d::get_eigenvalues(const torch::Tensor& u) const {
   double c = std::sqrt(wave_speed_);
   return {c, -c};
 }
@@ -129,7 +129,7 @@ torch::Tensor WaveEquation1d::compute_numerical_flux(
     const Mesh1d& mesh,
     const Reconstruction& reconstruction,
     const BoundaryCondition& boundary_condition,
-    int n_ghost_cells) {
+    int n_ghost_cells) const {
   int n_cells = mesh.GetNCells();
   torch::Tensor flux = torch::zeros({n_states_, n_cells + 1});
 

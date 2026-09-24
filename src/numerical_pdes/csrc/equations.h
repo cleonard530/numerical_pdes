@@ -18,18 +18,18 @@ class Equation {
 
         virtual ~Equation() = default;
 
-        virtual double get_max_wave_speed(const torch::Tensor& u) = 0;
+        virtual double get_max_wave_speed(const torch::Tensor& u) const = 0;
 
         virtual torch::Tensor compute_numerical_flux(
             const torch::Tensor& u, 
             const Mesh1d& mesh,
             const Reconstruction& reconstruction,
             const BoundaryCondition& boundary_condition,
-            int n_ghost_cells) = 0;
+            int n_ghost_cells) const = 0;
         
-        virtual std::tuple<double, double> get_eigenvalues(const torch::Tensor& u);
+        virtual std::tuple<double, double> get_eigenvalues(const torch::Tensor& u) const;
 
-        virtual double compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number);
+        virtual double compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) const;
 
         virtual std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
         get_local_speed(
@@ -38,7 +38,7 @@ class Equation {
             const Reconstruction& reconstruction,
             const BoundaryCondition& boundary_condition,
             int n_ghost_cells
-        );
+        ) const;
 };
 
 
@@ -47,9 +47,9 @@ class BurgersEquation1d : public Equation {
     private:
         double diff_coef_;
 
-        bool _is_viscous(double tol=1e-8);
+        bool _is_viscous(double tol=1e-8) const;
 
-        torch::Tensor _get_physical_flux(torch::Tensor u);
+        torch::Tensor _get_physical_flux(torch::Tensor u) const;
 
     public:
         BurgersEquation1d(double diff_coef)
@@ -59,18 +59,18 @@ class BurgersEquation1d : public Equation {
             }
         }
 
-        double get_max_wave_speed(const torch::Tensor& u) override;
+        double get_max_wave_speed(const torch::Tensor& u) const override;
 
-        double compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) override;
+        double compute_cfl_dt(const torch::Tensor& u, double dx, double cfl_number) const override;
 
         torch::Tensor compute_numerical_flux(
             const torch::Tensor& u, 
             const Mesh1d& mesh,
             const Reconstruction& reconstruction,
             const BoundaryCondition& boundary_condition,
-            int n_ghost_cells) override;
+            int n_ghost_cells) const override;
                 
-        std::tuple<double, double> get_eigenvalues(const torch::Tensor& u);
+        std::tuple<double, double> get_eigenvalues(const torch::Tensor& u) const;
 };
 
 
@@ -82,14 +82,14 @@ class WaveEquation1d : public Equation {
         WaveEquation1d(double wave_speed)
             : Equation("Wave Equation", 2), wave_speed_(wave_speed) {}
 
-        double get_max_wave_speed(const torch::Tensor& u) override;
+        double get_max_wave_speed(const torch::Tensor& u) const override;
 
         torch::Tensor compute_numerical_flux(
             const torch::Tensor& u, 
             const Mesh1d& mesh,
             const Reconstruction& reconstruction,
             const BoundaryCondition& boundary_condition,
-            int n_ghost_cells) override;
+            int n_ghost_cells) const override;
                 
-        std::tuple<double, double> get_eigenvalues(const torch::Tensor& u);
+        std::tuple<double, double> get_eigenvalues(const torch::Tensor& u) const;
 };

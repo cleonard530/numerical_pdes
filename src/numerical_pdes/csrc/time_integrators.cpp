@@ -43,11 +43,18 @@ void SSPRK3::step(
   const Reconstruction& reconstruction,
   const BoundaryCondition& boundary_condition,
   int n_ghost_cells) const {
-    // auto start = n_ghost_cells;
-    // auto end = u.size(1) - n_ghost_cells;
-    // torch::Tensor u_middle = u.slice(1, start, end);
+    torch::Tensor u1 = torch::zeros_like(u);
+    torch::Tensor u2 = torch::zeros_like(u);
 
+    torch::Tensor rhs = compute_rhs_1d(u, equation, mesh, reconstruction, boundary_condition, n_ghost_cells);
+    u1.slice(1, n_ghost_cells, -n_ghost_cells) = u.slice(1, n_ghost_cells, -n_ghost_cells) + dt * rhs;
+    boundary_condition.Apply(u1, n_ghost_cells);
 
-    // u_middle.add_(dt * rhs_fn(u));
-    // boundary_condition.Apply(u, n_ghost_cells);
+    rhs = compute_rhs_1d(u1, equation, mesh, reconstruction, boundary_condition, n_ghost_cells);
+    u2.slice(1, n_ghost_cells, -n_ghost_cells) = 3.0/4.0 * u.slice(1, n_ghost_cells, -n_ghost_cells) + 1.0/4.0 * (u1.slice(1, n_ghost_cells, -n_ghost_cells) + dt * rhs);
+    boundary_condition.Apply(u2, n_ghost_cells);
+
+    rhs = compute_rhs_1d(u2, equation, mesh, reconstruction, boundary_condition, n_ghost_cells);
+    u.slice(1, n_ghost_cells, -n_ghost_cells) = 1.0/3.0 * u.slice(1, n_ghost_cells, -n_ghost_cells) + 2.0/3.0 * (u2.slice(1, n_ghost_cells, -n_ghost_cells) + dt * rhs);
+    boundary_condition.Apply(u, n_ghost_cells);
   }

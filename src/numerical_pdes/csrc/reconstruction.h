@@ -27,8 +27,8 @@ class Reconstruction {
 
 class ConstantReconstruction : public Reconstruction {
     public:
-        ConstantReconstruction(int required_ghost_cells = 1)
-            : Reconstruction(required_ghost_cells) {} 
+        ConstantReconstruction()
+            : Reconstruction(1) {} 
 
         void reconstruct(
             const torch::Tensor& u,
@@ -51,8 +51,8 @@ class MinmodLinearReconstruction : public Reconstruction {
         double _minmod(double a, double b, double c) const;
 
     public:
-        MinmodLinearReconstruction(int required_ghost_cells = 1, double theta = 1.0)
-            : Reconstruction(required_ghost_cells), theta_(theta) {} 
+        MinmodLinearReconstruction(double theta = 1.0)
+            : Reconstruction(1), theta_(theta) {} 
 
         void reconstruct(
             const torch::Tensor& u,

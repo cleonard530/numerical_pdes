@@ -50,6 +50,7 @@ class ConstantReconstruction(Reconstruction):
         u_left = np.zeros(n_cells + 1)
 
         offset = n_ghost_cells - 1
+        // TODO: Either this is supposed to be n_cells or I don't need to call bc, right?
         for i in range(n_cells + 1):
             u_left[i] = u[offset + i]
             u_right[i] = u[offset + i + 1]

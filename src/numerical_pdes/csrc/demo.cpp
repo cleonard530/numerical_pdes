@@ -6,6 +6,7 @@
 #include "boundary_conditions.h"
 #include "reconstruction.h"
 #include "equations.h"
+#include "time_integrators.h"
 
 constexpr double pi = 3.14159265358979323846;
 
@@ -14,6 +15,7 @@ void demo_reconstruction();
 void demo_mesh();
 void demo_equations_BE();
 void demo_equations_wave();
+void run_time_integrator();
 void run_wave_equation();
 
 int main() {
@@ -27,7 +29,9 @@ int main() {
 
   // demo_equations_wave();
 
-  run_wave_equation();
+  run_time_integrator();
+
+  // run_wave_equation();
 
   return 0;
 }
@@ -157,7 +161,7 @@ void demo_reconstruction() {
   std::cout << "u_left (before const reconstruction) = " << u_left << std::endl;
   std::cout << "u_right (before const reconstruction) = " << u_right << std::endl;
 
-  ConstantReconstruction const_rec = ConstantReconstruction(n_ghost_cells);
+  ConstantReconstruction const_rec = ConstantReconstruction();
 
   const_rec.reconstruct(
     u,
@@ -174,7 +178,7 @@ void demo_reconstruction() {
     .unsqueeze(0)
     .repeat({n_states, 1});
 
-  MinmodLinearReconstruction linear_rec = MinmodLinearReconstruction(n_ghost_cells);
+  MinmodLinearReconstruction linear_rec = MinmodLinearReconstruction();
 
   linear_rec.reconstruct(
     u,
@@ -225,7 +229,7 @@ void demo_equations_BE() {
   std::cout << "cfl_dt = " << cfl_dt << std::endl;
 
   Mesh1d mesh = Mesh1d(lb, rb, n_cells);
-  ConstantReconstruction reconstruction = ConstantReconstruction(n_ghost_cells);
+  ConstantReconstruction reconstruction = ConstantReconstruction();
   PeriodicBC bc;
   torch::Tensor flux = b_equation.compute_numerical_flux(
     u, 
@@ -278,7 +282,7 @@ void demo_equations_wave() {
   std::cout << "cfl_dt = " << cfl_dt << std::endl;
 
   Mesh1d mesh = Mesh1d(lb, rb, n_cells);
-  MinmodLinearReconstruction reconstruction = MinmodLinearReconstruction(n_ghost_cells);
+  MinmodLinearReconstruction reconstruction = MinmodLinearReconstruction();
   PeriodicBC bc;
   torch::Tensor flux = wave_equation.compute_numerical_flux(
     u, 
@@ -292,6 +296,80 @@ void demo_equations_wave() {
   std::cout << "u.size(0) = " << u.size(0) << std::endl;
   std::cout << "u.size(1) = " << u.size(1) << std::endl;
   std::cout << "flux = " << flux << std::endl;
+}
+
+
+void run_time_integrator() {
+  std::cout << "/////////////////" << std::endl;
+  std::cout << "Demo Time Integrators" << std::endl;
+  std::cout << "/////////////////" << std::endl;
+
+  double lb = -pi;
+  double rb = pi;
+  int n_cells = 2;
+  int n_ghost_cells = 1;
+  int n_states = 2;
+  double wave_speed = 1.0;
+  double dx = (rb-lb) / n_cells;
+  double dt = 0.1;
+
+  Mesh1d mesh = Mesh1d(lb, rb, n_cells);
+  PeriodicBC bc;
+
+  torch::Tensor x = mesh.GetCellCentersWithGhostCells(n_ghost_cells);
+
+  std::cout << "x = " << x << std::endl;
+
+  torch::Tensor ux0 = torch::sin(mesh.GetCellCenters());
+  torch::Tensor ut0 = torch::cos(mesh.GetCellCenters());
+
+  std::cout << "ux0.dim() = " << ux0.dim() << std::endl;
+  std::cout << "ux0.size(0) = " << ux0.size(0) << std::endl;
+
+  torch::Tensor u = torch::zeros_like(x)
+    .unsqueeze(0)
+    .repeat({n_states, 1});
+
+  // Forward Euler
+  u.slice(1, n_ghost_cells, -n_ghost_cells)[0].copy_(ux0);
+  u.slice(1, n_ghost_cells, -n_ghost_cells)[1].copy_(ut0);
+
+  bc.Apply(u, n_ghost_cells);
+
+  std::cout << "u.dim() = " << u.dim() << std::endl;
+  std::cout << "u.size(0) = " << u.size(0) << std::endl;
+  std::cout << "u.size(1) = " << u.size(1) << std::endl;
+
+  std::cout << "u = " << u << std::endl;
+
+  WaveEquation1d wave_equation = WaveEquation1d(wave_speed);
+  ConstantReconstruction reconstruction = ConstantReconstruction();
+
+  ForwardEuler fe_integrator = ForwardEuler();
+  
+  fe_integrator.step(u, dt, wave_equation, mesh, reconstruction, bc, n_ghost_cells);
+  std::cout << "u (after ForwardEuler step) = " << u << std::endl;
+
+  // SSPRK3
+  double diff_coef = 0.0;
+  n_states = 1;
+  torch::Tensor u_be = torch::sin(x).unsqueeze(0);
+  bc.Apply(u_be, n_ghost_cells);
+
+  std::cout << "u_be.dim() = " << u_be.dim() << std::endl;
+  std::cout << "u_be.size(0) = " << u_be.size(0) << std::endl;
+  std::cout << "u_be = " << u_be << std::endl;
+
+  BurgersEquation1d burgers_equation = BurgersEquation1d(diff_coef);
+  MinmodLinearReconstruction linear_reconstruction = MinmodLinearReconstruction();
+
+  SSPRK3 sspk3_integrator = SSPRK3();
+  
+  sspk3_integrator.step(u_be, dt, burgers_equation, mesh, linear_reconstruction, bc, n_ghost_cells);
+  std::cout << "u (after SSPRK3 step) = " << u << std::endl;
+
+
+
 }
 
 

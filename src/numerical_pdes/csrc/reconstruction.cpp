@@ -51,6 +51,9 @@ void MinmodLinearReconstruction::reconstruct(
         double dx = mesh.GetDx();
         int n_states = u.size(0);
 
+        std::cout << "u_right.size(0) = " << u_right.size(0) << std::endl;
+        std::cout << "u_left.size(0) = " << u_left.size(0) << std::endl;
+        std::cout << "n_states = " << n_states << std::endl;
         TORCH_CHECK(u_right.size(0) == n_states, "u_right has the wrong number of states");
         TORCH_CHECK(u_left.size(0) == n_states, "u_left has the wrong number of states");
         TORCH_CHECK(u_right.size(1) == n_cells + 1, "u_right has the wrong number of cell interfaces");

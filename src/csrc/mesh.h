@@ -13,7 +13,6 @@ class Mesh {
             : n_dim_(n_dim), n_cells_(n_cells) {}
 
         int GetNDim() const { return n_dim_; }
-        void SetNDim(int n_dim) { n_dim_ = n_dim; }
 
         int GetNCells() const { return n_cells_; }
         void SetNCells(int n_cells) { n_cells_ = n_cells; }
@@ -40,10 +39,8 @@ class Mesh1d : public Mesh {
                 torch::kFloat64)) {}
         
         double GetDx() const { return dx_; }
-        void SetDx(double dx) { dx_ = dx; }
 
         torch::Tensor GetCellCenters() const { return cell_centers_; }
-        void SetCellCenters(torch::Tensor cell_centers) { cell_centers_ = cell_centers; }
 
         double GetPeriod();
 

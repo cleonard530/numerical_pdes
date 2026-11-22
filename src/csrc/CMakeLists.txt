@@ -19,6 +19,19 @@ set(CSRC_SOURCES
   # ...
 )
 
-add_executable(demo demo.cpp ${CSRC_SOURCES})
-target_link_libraries(demo PRIVATE "${TORCH_LIBRARIES}")
-target_compile_options(demo PRIVATE "${TORCH_CXX_FLAGS}")
+add_library(numerical_pdes ${CSRC_SOURCES})
+
+target_include_directories(numerical_pdes
+  PUBLIC
+  $(CMAKE_CURRENT_SOURCE_DIR)
+)
+
+target_link_libraries(numerical_pdes PRIVATE "${TORCH_LIBRARIES}")
+target_compile_options(numerical_pdes PRIVATE "${TORCH_CXX_FLAGS}")
+
+add_executable(demo demo.cpp)
+target_link_libraries(demo PRIVATE numerical_pdes)
+
+# tests
+enable_testing()
+add_subdirectory(tests)
